@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tic-Tac-Toe</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      text-align: center;
+      background-color: #0a0a1f;
+      color: #e0e0ff;
+      margin: 0;
+      padding: 0;
+      background-image: radial-gradient(circle, rgba(255, 255, 255, 0.1) 1%, transparent 20%);
+    }
+    h1 {
+      color: #00ffcc;
+      margin: 20px 0;
+      text-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc, 0 0 30px #00ffcc;
+      font-size: 2.5em;
+    }
+    #levelDisplay {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 16px;
+      color: #ff00ff;
+      text-shadow: 0 0 8px #ff00ff;
+    }
+    .btn-group {
+      margin: 15px 0;
+    }
+    button {
+      margin: 5px;
+      padding: 10px 15px;
+      font-size: 16px;
+      border: none;
+      background-color: #1a1a3a;
+      color: #00ffcc;
+      cursor: pointer;
+      border-radius: 5px;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc;
+    }
+    button:hover {
+      background-color: #2a2a5a;
+      box-shadow: 0 0 15px #00ffcc, 0 0 25px #00ffcc;
+    }
+    #difficultyButtons {
+      margin-top: 10px;
+      display: none;
+    }
+    #difficultyButtons button {
+      background-color: #1a1a3a;
+      box-shadow: 0 0 10px #ff00ff;
+    }
+    #difficultyButtons button.active {
+      background-color: #ff00ff;
+      box-shadow: 0 0 15px #ff00ff, 0 0 25px #ff00ff;
+      color: #000;
+    }
+    .dropdown {
+      position: relative;
+      display: inline-block;
+    }
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      background-color: #1a1a3a;
+      min-width: 100px;
+      z-index: 1;
+      border-radius: 5px;
+      box-shadow: 0 0 10px #00ffcc;
+    }
+    .dropdown-content button {
+      display: block;
+      width: 100%;
+      background-color: #1a1a3a;
+      border-bottom: 1px solid #555;
+      box-shadow: none;
+    }
+    .dropdown:hover .dropdown-content {
+      display: block;
+    }
+    #board {
+      display: grid;
+      gap: 5px;
+      justify-content: center;
+      margin: 20px auto;
+      padding: 10px;
+      background-color: rgba(20, 20, 50, 0.7);
+      border: 2px solid #00ffcc;
+      border-radius: 10px;
+      box-shadow: 0 0 15px #00ffcc, 0 0 25px #00ffcc, inset 0 0 10px #00ffcc;
+      width: fit-content;
+      position: relative;
+      top: -20px;
+    }
+    .cell {
+      width: 60px;
+      height: 60px;
+      font-size: 28px;
+      background-color: #1a1a3a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      border-radius: 5px;
+      user-select: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 8px #00ffcc, inset 0 0 5px #00ffcc;
+      color: #e0e0ff;
+    }
+    .cell.disabled {
+      cursor: default;
+      box-shadow: 0 0 5px #555;
+    }
+    .cell:not(.disabled):hover {
+      box-shadow: 0 0 15px #00ffcc, 0 0 25px #00ffcc;
+      background-color: #2a2a5a;
+    }
+    #status {
+      font-size: 20px;
+      margin-top: 10px;
+      color: #00ffcc;
+      text-shadow: 0 0 8px #00ffcc;
+    }
+    #score {
+      margin-top: 10px;
+      font-size: 18px;
+      color: #ff00ff;
+      text-shadow: 0 0 8px #ff00ff;
+      margin-bottom: 30px; /* Added space below the leaderboard to avoid overlap with board glow */
+    }
+  </style>
+</head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-T4X5WHY8ZS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-T4X5WHY8ZS');
+</script>
+
+<body>
+
+<div id="levelDisplay">LV: 0</div>
+<h1>Tic-Tac-Toe</h1>
+
+<div class="btn-group">
+  <button id="btnPvP">Player vs Player</button>
+  <button id="btnPvAI">Player vs AI</button>
+  <div class="dropdown">
+    <button>Size</button>
+    <div class="dropdown-content" id="sizeOptions">
+      <button data-size="3">3x3</button>
+      <button data-size="4">4x4</button>
+      <button data-size="5">5x5</button>
+    </div>
+  </div>
+</div>
+
+<div id="difficultyButtons">
+  <button data-level="beginners" class="active">Beginners</button>
+  <button data-level="easy">Easy</button>
+  <button data-level="medium">Medium</button>
+  <button data-level="hard">Hard</button>
+</div>
+
+<div id="score">Player X Wins: 0 | Player O Wins: 0 | Draws: 0</div>
+<div id="board"></div>
+<div id="status">Player X's turn</div>
+<button id="restartBtn">Restart Game</button>
+
+<audio id="clickSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
+
+<script>
+let boardSize = 3;
+let currentPlayer = "X";
+let gameBoard = [];
+let gameOver = false;
+let mode = "player";
+let difficulty = "beginners";
+let scores = { X: 0, O: 0, D: 0 };
+let winningCells = [];
+let playerLevel = 0;
+let moveCount = 0;
+let aiMistakeCount = 0;
+
+const boardElement = document.getElementById("board");
+const statusElement = document.getElementById("status");
+const scoreElement = document.getElementById("score");
+const levelDisplay = document.getElementById("levelDisplay");
+const clickSound = document.getElementById("clickSound");
+
+function playClick() {
+  clickSound.currentTime = 0;
+  try {
+    clickSound.play().catch(e => console.log("Audio playback failed:", e));
+  } catch (e) {
+    console.log("Audio error:", e);
+  }
+}
+
+function updateLevelDisplay() {
+  levelDisplay.textContent = "LV: " + playerLevel;
+}
+
+function getLevelReward() {
+  if (mode !== "ai" || moveCount < 5) return 0;
+  if (boardSize === 3) {
+    if (difficulty === "easy") return 0.5;
+    if (difficulty === "medium") return 2;
+    if (difficulty === "hard") return 4;
+  }
+  if (boardSize === 4) {
+    if (difficulty === "easy") return 0.1;
+    if (difficulty === "medium") return 2.5;
+    if (difficulty === "hard") return 3;
+  }
+  if (boardSize === 5) {
+    if (difficulty === "easy") return 0.25;
+    if (difficulty === "medium") return 3;
+    if (difficulty === "hard") return 5;
+  }
+  return 0;
+}
+
+function createBoard() {
+  boardElement.innerHTML = "";
+  boardElement.style.gridTemplateColumns = `repeat(${boardSize}, 60px)`;
+  gameBoard = Array.from({ length: boardSize }, () => Array(boardSize).fill(""));
+  for (let r = 0; r < boardSize; r++) {
+    for (let c = 0; c < boardSize; c++) {
+      const cell = document.createElement("div");
+      cell.classList.add("cell");
+      cell.dataset.row = r;
+      cell.dataset.col = c;
+      cell.addEventListener("click", handleMove);
+      boardElement.appendChild(cell);
+    }
+  }
+  updateStatus();
+}
+
+function handleMove(e) {
+  if (gameOver) return;
+  const row = +e.target.dataset.row;
+  const col = +e.target.dataset.col;
+  if (gameBoard[row][col] !== "") return;
+  if (mode === "ai" && currentPlayer === "O") return;
+
+  makeMove(row, col, currentPlayer);
+
+  if (!gameOver && mode === "ai" && currentPlayer === "O") {
+    disableBoard(true);
+    setTimeout(() => {
+      aiMove();
+      disableBoard(false);
+    }, 100);
+  }
+}
+
+function makeMove(row, col, player) {
+  gameBoard[row][col] = player;
+  const idx = row * boardSize + col;
+  boardElement.children[idx].textContent = player;
+  playClick();
+  moveCount++;
+
+  const winCells = checkWinner(row, col, player);
+  if (winCells.length) {
+    gameOver = true;
+    winningCells = winCells;
+    scores[player]++;
+    updateScore();
+    animateWin(winCells);
+    statusElement.textContent = `Player ${player} wins!`;
+
+    if (mode === "ai") {
+      if (player === "X") {
+        playerLevel += getLevelReward();
+        playerLevel = Math.round(playerLevel * 100) / 100;
+        aiMistakeCount++;
+      } else {
+        aiMistakeCount = 0;
+      }
+      updateLevelDisplay();
+    }
+
+  } else if (checkDraw()) {
+    statusElement.textContent = "It's a draw!";
+    scores.D++;
+    updateScore();
+    gameOver = true;
+  } else {
+    currentPlayer = player === "X" ? "O" : "X";
+    updateStatus();
+  }
+}
+
+function animateWin(cells) {
+  for (const cell of cells) {
+    const idx = cell.row * boardSize + cell.col;
+    const el = boardElement.children[idx];
+    el.style.backgroundColor = "#ff00ff";
+    el.style.color = "#000";
+    el.style.fontWeight = "bold";
+    el.style.boxShadow = "0 0 20px #ff00ff, 0 0 30px #ff00ff";
+    setTimeout(() => {
+      el.style.backgroundColor = "";
+      el.style.color = "";
+      el.style.fontWeight = "";
+      el.style.boxShadow = "0 0 8px #00ffcc, inset 0 0 5px #00ffcc";
+    }, 3000);
+  }
+}
+
+function updateStatus() {
+  statusElement.textContent = `Player ${currentPlayer}'s turn`;
+}
+
+function updateScore() {
+  scoreElement.textContent = `Player X Wins: ${scores.X} | Player O Wins: ${scores.O} | Draws: ${scores.D}`;
+}
+
+function checkWinner(row, col, player) {
+  const line = (cells) => cells.every(cell => gameBoard[cell.row][cell.col] === player);
+
+  let rowLine = Array.from({ length: boardSize }, (_, i) => ({ row, col: i }));
+  if (line(rowLine)) return rowLine;
+
+  let colLine = Array.from({ length: boardSize }, (_, i) => ({ row: i, col }));
+  if (line(colLine)) return colLine;
+
+  if (row === col) {
+    let diagLine = Array.from({ length: boardSize }, (_, i) => ({ row: i, col: i }));
+    if (line(diagLine)) return diagLine;
+  }
+
+  if (row + col === boardSize - 1) {
+    let antiDiagLine = Array.from({ length: boardSize }, (_, i) => ({ row: i, col: boardSize - 1 - i }));
+    if (line(antiDiagLine)) return antiDiagLine;
+  }
+
+  return [];
+}
+
+function checkDraw() {
+  return gameBoard.flat().every(cell => cell !== "");
+}
+
+function disableBoard(disabled) {
+  boardElement.querySelectorAll(".cell").forEach(cell => {
+    cell.classList.toggle("disabled", disabled);
+  });
+}
+
+function aiMove() {
+  let move = null;
+
+  if (difficulty === "beginners") {
+    move = randomMove();
+  } else if (difficulty === "easy") {
+    move = getBlockingMove() || randomMove();
+  } else if (difficulty === "medium") {
+    move = getBestMove(3) || randomMove();
+  } else if (difficulty === "hard") {
+    const depth = boardSize === 3 ? 6 : boardSize === 4 ? 4 : 3;
+    if (aiMistakeCount >= 2) {
+      move = randomMove();
+    } else {
+      move = findForkMove("O") || findForkMove("X") || getBestMove(depth) || randomMove();
+    }
+  }
+
+  if (move) makeMove(move.row, move.col, "O");
+}
+
+function randomMove() {
+  const available = [];
+  for (let r = 0; r < boardSize; r++) {
+    for (let c = 0; c < boardSize; c++) {
+      if (gameBoard[r][c] === "") available.push({ row: r, col: c });
+    }
+  }
+  return available[Math.floor(Math.random() * available.length)] || null;
+}
+
+function getBlockingMove() {
+  for (let r = 0; r < boardSize; r++) {
+    for (let c = 0; c < boardSize; c++) {
+      if (gameBoard[r][c] === "") {
+        gameBoard[r][c] = "X";
+        if (checkWinner(r, c, "X").length) {
+          gameBoard[r][c] = "";
+          return { row: r, col: c };
+        }
+        gameBoard[r][c] = "";
+      }
+    }
+  }
+  return null;
+}
+
+function getBestMove(depth) {
+  let bestScore = -Infinity;
+  let bestMove = null;
+  for (let r = 0; r < boardSize; r++) {
+    for (let c = 0; c < boardSize; c++) {
+      if (gameBoard[r][c] === "") {
+        gameBoard[r][c] = "O";
+        const score = minimax(depth - 1, false, -Infinity, Infinity);
+        gameBoard[r][c] = "";
+        if (score > bestScore) {
+          bestScore = score;
+          bestMove = { row: r, col: c };
+        }
+      }
+    }
+  }
+  return bestMove;
+}
+
+function minimax(depth, isMax, alpha, beta) {
+  const result = getGameResult();
+  if (result !== null) return result === "O" ? 10 : result === "X" ? -10 : 0;
+  if (depth === 0) return 0;
+
+  let best = isMax ? -Infinity : Infinity;
+  for (let r = 0; r < boardSize; r++) {
+    for (let c = 0; c < boardSize; c++) {
+      if (gameBoard[r][c] === "") {
+        gameBoard[r][c] = isMax ? "O" : "X";
+        const score = minimax(depth - 1, !isMax, alpha, beta);
+        gameBoard[r][c] = "";
+        if (isMax) {
+          best = Math.max(best, score);
+          alpha = Math.max(alpha, best);
+        } else {
+          best = Math.min(best, score);
+          beta = Math.min(beta, best);
+        }
+        if (beta <= alpha) return best;
+      }
+    }
+  }
+  return best;
+}
+
+function getGameResult() {
+  for (let r = 0; r < boardSize; r++) {
+    for (let c = 0; c < boardSize; c++) {
+      const cell = gameBoard[r][c];
+      if (cell !== "" && checkWinner(r, c, cell).length) return cell;
+    }
+  }
+  return gameBoard.flat().includes("") ? null : "draw";
+}
+
+function createsFork(row, col, player) {
+  let count = 0;
+  gameBoard[row][col] = player;
+  for (let r = 0; r < boardSize; r++) {
+    for (let c = 0; c < boardSize; c++) {
+      if (gameBoard[r][c] === "" && checkWinner(r, c, player).length) count++;
+    }
+  }
+  gameBoard[row][col] = "";
+  return count >= 2;
+}
+
+function findForkMove(player) {
+  for (let r = 0; r < boardSize; r++) {
+    for (let c = 0; c < boardSize; c++) {
+      if (gameBoard[r][c] === "" && createsFork(r, c, player)) return { row: r, col: c };
+    }
+  }
+  return null;
+}
+
+document.getElementById("btnPvP").onclick = () => {
+  mode = "player";
+  document.getElementById("difficultyButtons").style.display = "none";
+  resetGame();
+};
+
+document.getElementById("btnPvAI").onclick = () => {
+  mode = "ai";
+  document.getElementById("difficultyButtons").style.display = "inline-block";
+  resetGame();
+};
+
+document.querySelectorAll("#difficultyButtons button").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll("#difficultyButtons button").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    difficulty = btn.dataset.level;
+    resetGame();
+  };
+});
+
+document.querySelectorAll("#sizeOptions button").forEach(btn => {
+  btn.onclick = () => {
+    boardSize = parseInt(btn.dataset.size);
+    resetGame();
+  };
+});
+
+document.getElementById("restartBtn").onclick = resetGame;
+
+function resetGame() {
+  currentPlayer = "X";
+  gameOver = false;
+  winningCells = [];
+  moveCount = 0;
+  createBoard();
+  updateScore();
+  updateStatus();
+  updateLevelDisplay();
+}
+
+resetGame();
+</script>
+
+</body>
+</html>
